@@ -3,7 +3,7 @@ const app = express();
 const bodyparser = require('body-parser');
 const routes = require('./routes/routes');
 const mongoose = require('mongoose');
-const mongoURL = process.env.MONGO_URL || 'mongodb://localhost/local'
+const mongoURL = process.env.MONGO_URL || 'mongodb+srv://Taiwo:56987456Taiwo@cluster0.lyrtx.mongodb.net/loan?retryWrites=true&w=majority'
 const client =  mongoose.connect(mongoURL, { useNewUrlParser: true,useUnifiedTopology: true  })
               .then(() => console.log("MongoDb connected"))
               .catch(err => console.log(err));;
