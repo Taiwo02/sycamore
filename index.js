@@ -4,6 +4,8 @@ const bodyparser = require('body-parser');
 const routes = require('./routes/routes');
 const mongoose = require('mongoose');
 const mongoURL = process.env.MONGO_URL || 'mongodb://localhost/local'
+
+// const pug = require('pug');
 // mongoose.connect(mongoURL, { useNewUrlParser: true,useUnifiedTopology: true  });
 // const db = mongoose.Connection;
 // db.on('err',(error)=> console.log(error));
@@ -18,6 +20,27 @@ const client =  mongoose.connect(mongoURL, { useNewUrlParser: true,useUnifiedTop
 //   client.close();
 // });
 // mongoose.connect(mongoURL, { useNewUrlParser: true,useUnifiedTopology: true });
+const https = require('https')
+const options = {
+  hostname: 'api.paystack.co',
+  port: 443,
+  path: '/transaction/verify/:reference',
+  method: 'GET',
+  headers: {
+    Authorization: 'Bearer sk_test_674af420e266597b60d2843367db5a6709d6395d'
+  }
+}
+https.request(options, res => {
+  let data = ''
+  res.on('data', (chunk) => {
+    data += chunk
+  });
+  res.on('end', () => {
+    console.log(JSON.parse(data))
+  })
+}).on('error', error => {
+  console.error(error)
+})
 
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({extended: false}));

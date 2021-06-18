@@ -1,7 +1,13 @@
 const User = require('../model/user');
 const Loan = require('../model/loan')
+const Wallet = require('../model/wallet')
+const Transaction = require('../model/transactions')
 const jwt = require('jsonwebtoken');
 const date = require('../midlewares/date')
+const _ = require('lodash');
+const path = require('path');
+const request = require('request');
+const {initializePayment, verifyPayment} = require('../config/paystack')(request);
 // data = [{
 //     firstname:"admin",
 //     lastname:"admin",
@@ -28,6 +34,8 @@ let staffs = {
             const result=await new User({firstname,lastname,email,address,password});
             result.save(function(error,response){
                 if(response && !error){ 
+                  const walletDetails = new Wallet({user_id:response.id,balance:0,currency:"NGN",});
+                  walletDetails.save();
                     res.status(200).send("user created successfuly")
                 }
                 else{
@@ -64,6 +72,7 @@ let staffs = {
         res.status(200).send(users)
     })
     },
+
     requestLoan:async(req,res)=>{
         try {
             const {original_principal,monthly_payment} = req.body;
@@ -72,8 +81,6 @@ let staffs = {
             var totalDays = value * 365;
             var years = Math.floor(totalDays/365);
             var months = Math.floor((totalDays-(years *365))/30);
-            // var days = Math.floor(totalDays - (years*365) - (months * 30));
-            // var result = years + " years, " + months + " months,";
             const result=await new Loan({
                 original_principal,
                 outstanding_principal:original_principal,
@@ -144,6 +151,125 @@ let staffs = {
            } catch (error) {
                res.status(500).send(error)
            }
+    },
+
+
+    payment:async(req,res)=>{
+        try {
+            let _id = req.u_ID
+            let {amount} = req.body;
+            result = await User.findOne({_id},(err,user)=>{
+                    if(err) throw err; 
+                    return user;
+                })
+                let loan = await Loan.findOne({user_id:result.user_id,status:'disbursed'},(err,responses)=>{
+                    if(err) throw err;
+                    return responses
+                })
+                let form = await {
+                    amount:amount * 100,
+                    first_name : result.firstname,
+                    last_name : result.lastname,
+                    email : result.email,
+                    ref: 'Vm'+Math.floor((Math.random() * 1000000000) + 1)
+                }
+
+                initializePayment(form, (error, body)=>{
+                    if(error){
+                        //handle errors
+                        console.log(error);
+                        return;
+                   }
+                   response = JSON.parse(body);
+                    response.reference
+                    const result=await new Transaction({
+                        loan_id:loan.id,
+                        reference:response.data.reference,
+                        amount:0,
+                        user_id:result.id,
+                    });
+                   await  result.save(function(error,response){
+                        if(response && !error){ 
+                            res.status(200).send({url:response.data.authorization_url,message:"Payment initiated"})
+                        }
+                        else{
+                            res.status(500).send(error)
+                        }
+                    })
+                });
+           
+           } catch (error) {
+               res.status(500).send(error)
+           }
+    },
+
+
+
+    verifyPayments:async(req,res)=>{
+        try {
+            const ref = req.query.reference;
+            verifyPayment(ref, (error,body)=>{
+                if(error){
+                    //handle errors appropriately
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+                response = JSON.parse(body);
+                const data = _.at(response.data, [
+                    'reference', 'amount','customer.email', 
+                'customer.first_name','customer.last_name', 
+                'status','currency','channel','paid_at'
+            ]);
+           let  {
+                    reference, amount,email, first_name,last_name,status,
+                      currency,channel,paid_at
+                   } = data;
+                if(status == 'success'){
+                const getWallet = await Wallet.findOne({system:true},(err,wallet)=>{
+                    if(err) throw err; 
+                    return wallet;
+                })
+            let date_ob = new Date(paid_at);
+            let time = date_ob.toTimeString().substr(0, 5);
+            let fullDate = date_ob.toISOString().substr(0, 10)
+            var newTransaction = { $set: {
+              amount:amount,
+              description:response.message,
+              type:'income',
+              status:status,
+              date:fullDate,
+              time:time,
+              amount_before:parseFloat(getWallet.balance),
+              amount_after: parseFloat((getWallet.balance + amount)),
+              atempt:response.data.log.attempts,
+              currency:currency
+            }};
+            var newWallet = { $set: {balance:parseFloat((getWallet.balance + amount))}};
+                    await Transaction.updateOne({reference:reference},newTransaction,(err,results)=>{
+                        if (results){ 
+                        console.log(results)
+                        // socket.emit('new login',{result})
+                        }
+                    })
+                   await Wallet.updateOne({id:getWallet.id},newWallet,(err,resultses)=>{
+                        if (resultses){ 
+                        console.log(resultses)
+                        // socket.emit('new login',{result})
+                        }
+                    })
+                }
+                
+                
+            })
+           } catch (error) {
+               res.status(500).send(error)
+           }
     }
+
+
+   
+
+
+
 };
 module.exports = staffs;

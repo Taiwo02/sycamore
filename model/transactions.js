@@ -7,16 +7,18 @@ let user_schema = new Schema({
     loan_id:{type:Number},
     amount:{type:Number,required:true},
     description:{type:String},
-    type:{type:String,required:true},
+    type:{type:String},
     status:{type:String,default:"pending"},
-    date:{type:String,default:date.fullDate},
-    time:{type:String,default:date.time},
-    year:{type:Number},
-    month:{type:Number},
-    payment:{type:Number,default:0},
-    repayment_plan_begin_date:{type:String,default:d.null},
-    user_id:{type:String,}
+    date:{type:String},
+    time:{type:String},
+    amount_before:{type:Number},
+    amount_after:{type:Number},
+    atempt:{type:Number},
+    reference:{type:String},
+    user_id:{type:String},
+    status:{type:String},
+    currency:{type:String}
 
 })
-let requestLoan = mongoose.model('request_loan', user_schema);
-module.exports = requestLoan;
+let transaction = mongoose.model('transactions', user_schema);
+module.exports = transaction;
