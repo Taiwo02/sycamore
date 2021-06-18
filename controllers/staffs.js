@@ -34,11 +34,14 @@ let staffs = {
             const result=await new User({firstname,lastname,email,address,password});
             result.save(async function(error,response){
                 if(response && !error){ 
-                  const walletDetails = await new Wallet({user_id:response.id,balance:0,currency:"NGN",});
-                  walletDetails.save();
-                    res.status(200).send(walletDetails)
+                //   const walletDetails = await new Wallet({user_id:response.id,balance:0,currency:"NGN",});
+                //   walletDetails.save();
+                console.log(response)
+                    res.status(200).send(response)
                 }
                 else{
+                console.log(error)
+
                     res.status(500).send(error)
 
 
