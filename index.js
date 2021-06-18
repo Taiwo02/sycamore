@@ -23,7 +23,7 @@ app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({extended: false}));
 app.use(express.static(__dirname + '/public'));
 app.use('/',routes);
-app.listen(5000,(err)=>{
+app.listen(process.env.PORT || 5000,(err)=>{
     console.log('You are listen to port 5000');
 })
 
