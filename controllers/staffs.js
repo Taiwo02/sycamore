@@ -79,8 +79,8 @@ let staffs = {
                 outstanding_principal:original_principal,
                 year:years,
                 month:months,
-                monthly_payment:monthly_payment
-
+                monthly_payment:monthly_payment,
+                user_id:req.u_ID
             });
             result.save(function(error,response){
                 if(response && !error){ 
@@ -127,8 +127,10 @@ let staffs = {
     },
     loanStatus:async(req,res)=>{
         try {
-            const {outstanding_principal} = req.body; 
+            const {status} = req.body; 
             const result=await new Loan({outstanding_principal,outstanding_principal:outstanding_principal});
+            var d = new Date(date.fullDate.toString());
+            setMonth(d.getMonth() + 1)
             result.save(function(error,response){
                 if(response && !error){ 
                     res.status(200).send("user created successfuly")
