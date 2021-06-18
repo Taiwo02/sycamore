@@ -34,9 +34,9 @@ let staffs = {
             const result=await new User({firstname,lastname,email,address,password});
             result.save(function(error,response){
                 if(response && !error){ 
-                  const walletDetails =await new Wallet({user_id:response.id,balance:0,currency:"NGN",});
+                  const walletDetails = new Wallet({user_id:response.id,balance:0,currency:"NGN",});
                   walletDetails.save();
-                    res.status(200).send(response)
+                    res.status(200).send(walletDetails)
                 }
                 else{
                     res.status(500).send(error)
