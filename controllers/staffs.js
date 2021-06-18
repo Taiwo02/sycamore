@@ -182,13 +182,13 @@ let staffs = {
                    }
                    response = JSON.parse(body);
                     response.reference
-                    const result=await new Transaction({
+                    const result = new Transaction({
                         loan_id:loan.id,
                         reference:response.data.reference,
                         amount:0,
                         user_id:result.id,
                     });
-                   await  result.save(function(error,response){
+                    result.save(function(error,response){
                         if(response && !error){ 
                             res.status(200).send({url:response.data.authorization_url,message:"Payment initiated"})
                         }
@@ -225,7 +225,7 @@ let staffs = {
                       currency,channel,paid_at
                    } = data;
                 if(status == 'success'){
-                const getWallet = await Wallet.findOne({system:true},(err,wallet)=>{
+                const getWallet = Wallet.findOne({system:true},(err,wallet)=>{
                     if(err) throw err; 
                     return wallet;
                 })
@@ -245,13 +245,13 @@ let staffs = {
               currency:currency
             }};
             var newWallet = { $set: {balance:parseFloat((getWallet.balance + amount))}};
-                    await Transaction.updateOne({reference:reference},newTransaction,(err,results)=>{
+                     Transaction.updateOne({reference:reference},newTransaction,(err,results)=>{
                         if (results){ 
                         console.log(results)
                         // socket.emit('new login',{result})
                         }
                     })
-                   await Wallet.updateOne({id:getWallet.id},newWallet,(err,resultses)=>{
+                    Wallet.updateOne({id:getWallet.id},newWallet,(err,resultses)=>{
                         if (resultses){ 
                         console.log(resultses)
                         // socket.emit('new login',{result})
