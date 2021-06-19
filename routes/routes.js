@@ -16,6 +16,7 @@ router.route('/payment/:loan_id').post(auth,staffs.payment)
 router.route("/verifyPayments").post(staffs.verifyPayments)
 router.route('/update_loan/:loan_id').post(auth,verify,staffs.updateLoan)
 router.route('/user_status/:user_id').post(auth,verify,staffs.userStatus)
+router.route('/get_bank').get(auth,staffs.getBank)
 router.route('/recipient/:loan_id').post(auth,verify,staffs.verifyAccount,staffs.CreateRecipient)
 router.route('/initiateTransfer/:recipient_code').post(auth,verify,staffs.initiateTransfer)
 

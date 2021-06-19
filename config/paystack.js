@@ -73,7 +73,7 @@ const request = require('request');
     }
     request(options,callback);
    },
-   
+
    InitiateTransfer : async(param,mycallback) => {
     const options = {
         url : 'https://api.paystack.co/transferrecipient',
@@ -89,7 +89,24 @@ const request = require('request');
         return mycallback(error, body);
     }
     request(options,callback);
-   }
+   },
+
+   getBanks : async(account,mycallback) => {
+    const options = {
+        url : 'https://api.paystack.co/bank',
+        method: 'GET',
+        headers : {
+            authorization: MySecretKey,
+            'content-type': 'application/json',
+            'cache-control': 'no-cache'
+       }
+    }
+    const callback = (error, response, body)=>{
+        return mycallback(error, body);
+    }
+    request(options,callback);
+
+   },
 
 //    return {initializePayment, verifyPayment};
 }

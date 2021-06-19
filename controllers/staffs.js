@@ -331,7 +331,33 @@ let staffs = {
            }
     },
 
+    getBank:async(req,res)=>{
+        try {
+            // let {account,bank_code}=req.body;
+            // let acounts = {account:Number(account),bank_code:bank_code}
+            // res.status(200).send({data:acounts})
 
+            paystack.getBanks(acounts, (error,body)=>{
+                if(error){
+                    console.log(error)
+                    //handle errors appropriately
+                    res.status(500).send({err:error,message:"error occure"})
+                }
+                response = JSON.parse(body);
+                if(response.status == true){
+                    req['account'] = response.data.account_number;
+                    req['bank_code'] = req.query.bank_code;
+                }
+                else{
+                    res.status(200).send({data:response.data,message:response.message,status:response.status})
+                   }
+                
+                
+            })
+           } catch (error) {
+               res.status(500).send(error)
+           }
+    },
    
     verifyAccount:async(req,res)=>{
         try {
