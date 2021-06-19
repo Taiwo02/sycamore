@@ -374,7 +374,7 @@ let staffs = {
            }
     },
    
-    verifyAccount:async(req,res)=>{
+    verifyAccount:async(req,res,next)=>{
         try {
 
             let {account,bank_code}=req.body;
@@ -391,7 +391,7 @@ let staffs = {
                 if(response.status == true){
                     req['account'] = response.data.account_number;
                     req['bank_code'] = req.query.bank_code;
-                    res.status(200).send({data:response.data,message:response.message,status:response.status})
+                    next();
 
                 }
                 else{
