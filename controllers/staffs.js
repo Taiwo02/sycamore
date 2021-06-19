@@ -324,7 +324,7 @@ let staffs = {
    
     verifyAccount:async(req,res)=>{
         try {
-            const account = {account:req.query.account,bank_code:req.query.bank_code};
+            let account = {account,bank_code}=req.body;
             paystack.verifyAccNo(account, (error,body)=>{
                 if(error){
                     console.log(error)
