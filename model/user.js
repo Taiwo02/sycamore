@@ -8,7 +8,14 @@ let user_schema = new Schema({
       email:{type:String,required:true,trim:true,unique:true},
       address:{type:String,required:true,},
       isAdmin:{type:Boolean,default:false},
-      password:{type:String,required:true,trim:true}
+      password:{type:String,required:true,trim:true},
+      staus:{type:String,default:"pending"},
+      approved_by:{type:String,default:null},
+      approved_at:{type:String,default:null},
+      suspended_by:{type:String,default:null},
+      suspended_at:{type:String,default:null},
+
+
 })
 user_schema.pre('save',(next)=>{
     const user = this;

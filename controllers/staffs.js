@@ -59,8 +59,8 @@ let staffs = {
             const payload = { user: user._id};
             const secret ='hello';
             const token = jwt.sign(payload, secret);
-            User.findOne({ _id: user._id }).then(result =>
-                res.status(200).send({data: result, token: token})
+            User.findOne({ _id:user._id,status:"active"}).then(result =>
+                res.status(200).send({token: token })
             )
             }
             else{ res.status(404).send('invalid email or password');}
@@ -182,20 +182,31 @@ let staffs = {
                res.status(500).send(error)
            }
     },
-    loanStatus:async(req,res)=>{
+       userStatus:async(req,res)=>{
         try {
             const {status} = req.body; 
-            const result=await new Loan({outstanding_principal,outstanding_principal:outstanding_principal});
-            var d = new Date(date.fullDate.toString());
-            setMonth(d.getMonth() + 1)
-            result.save(function(error,response){
-                if(response && !error){ 
-                    res.status(200).send("user created successfuly")
-                }
-                else{
-                    res.status(500).send(error)
+            let _id = req.params.user_id;
+            let user_id = u_ID;
+            // const result=await new User.findOne({_id},(err,user)=>{
+            //     if(err) throw err;
+            //     return user;
+            // });
+            var update;
+            if(status =="suspend"){
+            update = await { $set: {status:"suspended",suspended_by:user_id,suspended_at:date.fullDate}}; 
+              
+            }
+            else{
+                update = await { $set: {status:"active",approved_by:user_id,approved_at:date.fullDate}}; 
 
-
+            }
+            // var d = new Date(date.fullDate.toString());
+            // setMonth(d.getMonth() + 1)
+            await   User.updateOne({_id},update,(err,resultses)=>{
+                if (resultses){ 
+                console.log(resultses)
+                res.status(200).send({message:status="suspend"?"suspended successfuly":"Activated successfuly"})
+                // socket.emit('new login',{result})
                 }
             })
            } catch (error) {
@@ -323,14 +334,18 @@ let staffs = {
    
     verifyAccount:async(req,res)=>{
         try {
-            let account = {account,bank_code}=req.body;
-            paystack.verifyAccNo(account, (error,body)=>{
+            let {account,bank_code}=req.body;
+            let acounts = {account:Number(account),bank_code:Number(bank_code)}
+            
+            console.log(account)
+            paystack.verifyAccNo(acounts, (error,body)=>{
                 if(error){
                     console.log(error)
                     //handle errors appropriately
                     res.status(500).send(error)
                 }
                 response = JSON.parse(body);
+                console.log(response)
                 if(response.status == true){
                     req['account'] = response.data.account_number;
                     req['bank_code'] = req.query.bank_code;
