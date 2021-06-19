@@ -336,26 +336,27 @@ let staffs = {
         try {
             let {account,bank_code}=req.body;
             let acounts = {account:Number(account),bank_code:Number(bank_code)}
+            res.status(200).send({data:acounts})
             
-            console.log(account)
-            paystack.verifyAccNo(acounts, (error,body)=>{
-                if(error){
-                    console.log(error)
-                    //handle errors appropriately
-                    res.status(500).send(error)
-                }
-                response = JSON.parse(body);
-                console.log(response)
-                if(response.status == true){
-                    req['account'] = response.data.account_number;
-                    req['bank_code'] = req.query.bank_code;
-                }
-                else{
-                    res.status(200).send({data:response.data,message:response.message,status:response.status})
-                   }
+            // console.log(account)
+            // paystack.verifyAccNo(acounts, (error,body)=>{
+            //     if(error){
+            //         console.log(error)
+            //         //handle errors appropriately
+            //         res.status(500).send(error)
+            //     }
+            //     response = JSON.parse(body);
+            //     console.log(response)
+            //     if(response.status == true){
+            //         req['account'] = response.data.account_number;
+            //         req['bank_code'] = req.query.bank_code;
+            //     }
+            //     else{
+            //         res.status(200).send({data:response.data,message:response.message,status:response.status})
+            //        }
                 
                 
-            })
+            // })
            } catch (error) {
                res.status(500).send(error)
            }
