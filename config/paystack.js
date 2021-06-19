@@ -41,6 +41,7 @@ const request = require('request');
    },
 
    verifyAccNo : async(account,mycallback) => {
+       console.log(account)
     const options = {
         url : 'https://api.paystack.co/bank/resolve?account_number='+(account.account)+'&bank_code='+(account.bank_code),
         method: 'GET',
@@ -91,7 +92,7 @@ const request = require('request');
     request(options,callback);
    },
 
-   getBanks : async(account,mycallback) => {
+   getBanks : async(mycallback) => {
     const options = {
         url : 'https://api.paystack.co/bank',
         method: 'GET',
