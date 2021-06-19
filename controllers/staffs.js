@@ -6,8 +6,8 @@ const jwt = require('jsonwebtoken');
 const date = require('../midlewares/date')
 const _ = require('lodash');
 const path = require('path');
-const request = require('request');
-const {initializePayment, verifyPayment} = require('../config/paystack')(request);
+
+const  paystack = require('../config/paystack')
 // data = [{
 //     firstname:"admin",
 //     lastname:"admin",
@@ -36,7 +36,6 @@ let staffs = {
                 if(response && !error){ 
                   const walletDetails = new Wallet({user_id:response.id,balance:0,currency:"NGN",});
                   walletDetails.save();
-                console.log(response)
                     res.status(200).send(response)
                 }
                 else{
@@ -60,7 +59,6 @@ let staffs = {
             const secret ='hello';
             const token = jwt.sign(payload, secret);
             User.findOne({ _id: user._id }).then(result =>
-                // console.log(result)
                 res.status(200).send({data: result, token: token})
             )
             }
@@ -108,23 +106,71 @@ let staffs = {
                res.status(500).send(error)
            }
     },
-
-    getLoan:async(req,res)=>{
+    getTransactions:async(req,res)=>{
         try {
-            result = await Loan.find({},(err,users)=>{
-                if(err) throw err;
+            result = await Transaction.find({},(err,users)=>{
+                if(err) {
+                    console.log(error)
+                }else{
+                    // var d = new Date(date.fullDate.toString());
+                    //  console.log(d.setMonth(d.getMonth() + 1))
+                    res.status(200).send(users)
 
-                res.status(200).send(users)
+                }
             })
           
            } catch (error) {
                res.status(500).send(error)
            }
     },
+
+    getLoan:async(req,res)=>{
+        try {
+            result = await Loan.find({},(err,users)=>{
+                if(err) {
+                    console.log(error)
+                }else{
+                    // var d = new Date(date.fullDate.toString());
+                    //  console.log(d.setMonth(d.getMonth() + 1))
+                    res.status(200).send(users)
+
+                }
+            })
+          
+           } catch (error) {
+               res.status(500).send(error)
+           }
+    },
+
+    updateLoan:async (req,res)=>{
+        let{status}=req.body;
+        let _id = req.params.loan_id
+        let user_id = req.u_ID;
+          var update 
+          if(status == 'accepted'){
+         update = await { $set: {loan_status:status,approve_by:user_id,approve_at:date.fullDate}}; 
+          }
+         else  if(status == 'closed'){
+            update = await { $set: {loan_status:status,closed_by:user_id,closed_at:date.fullDate}}; 
+             }
+             else{
+                update = await { $set: {loan_status:status}};
+             }
+          Loan.updateOne({_id},update,(err,resultses)=>{
+            if (resultses && !err){ 
+            res.status(200).send({data:resultses,message:"successfuly updated"})
+            // socket.emit('new login',{result})
+            }
+            else{ 
+                console.log(err)
+            res.status(200).send({data:err,message:"error updated"})
+            }
+        })
+      },
+
     getAloan:async(req,res)=>{
         try {
             let _id = req.params.loan_id
-            console.log(_id)
             result = await Loan.findOne({_id},(err,users)=>{
                 if(err) throw err;
 
@@ -158,17 +204,25 @@ let staffs = {
 
 
     payment:async(req,res)=>{
+        var d = new Date(date.fullDate.toString());
+        d.setMonth(d.getMonth() + 1)
+        let times = d.toTimeString().substr(0, 5);
+          let fullDates = d.toISOString().substr(0, 10)
+          let loan = req.params.loan_id;
+        // console.log(fullDates)
         try {
             let _id = req.u_ID
             let {amount} = req.body;
-            result = await User.findOne({_id},(err,user)=>{
+            let result = await User.findOne({_id},(err,user)=>{
                     if(err) throw err; 
                     return user;
                 })
-                let loan = await Loan.findOne({user_id:result.user_id,status:'disbursed'},(err,responses)=>{
-                    if(err) throw err;
-                    return responses
-                })
+
+                // let loan = await Loan.findOne({user_id:result.user_id,status:'disbursed'},(err,responses)=>{
+                //     if(err) throw err;
+                //     return responses
+                // })
+
                 let form = await {
                     amount:amount * 100,
                     first_name : result.firstname,
@@ -177,7 +231,7 @@ let staffs = {
                     ref: 'Vm'+Math.floor((Math.random() * 1000000000) + 1)
                 }
 
-                initializePayment(form, (error, body)=>{
+                paystack.initializePayment(form, (error, body)=>{
                     if(error){
                         //handle errors
                         console.log(error);
@@ -185,23 +239,18 @@ let staffs = {
                    }
                    response = JSON.parse(body);
                     response.reference
-                    const result = new Transaction({
-                        loan_id:loan.id,
+                    const transaction = new Transaction({
+                        loan_id:loan,
                         reference:response.data.reference,
                         amount:0,
                         user_id:result.id,
                     });
-                    result.save(function(error,response){
-                        if(response && !error){ 
-                            res.status(200).send({url:response.data.authorization_url,message:"Payment initiated"})
-                        }
-                        else{
-                            res.status(500).send(error)
-                        }
-                    })
+                    transaction.save()
+                    res.status(200).send({url:response.data.authorization_url,message:"Payment initiated"})
                 });
            
            } catch (error) {
+               console.log(error)
                res.status(500).send(error)
            }
     },
@@ -211,10 +260,10 @@ let staffs = {
     verifyPayments:async(req,res)=>{
         try {
             const ref = req.query.reference;
-            verifyPayment(ref, (error,body)=>{
+            paystack.verifyPayment(ref, (error,body)=>{
                 if(error){
-                    //handle errors appropriately
                     console.log(error)
+                    //handle errors appropriately
                     res.status(500).send(error)
                 }
                 response = JSON.parse(body);

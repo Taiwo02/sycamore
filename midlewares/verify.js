@@ -5,7 +5,7 @@ module.exports = {
      try{
             let _id =req.u_ID
             User.findOne({_id},(error,response)=>{
-                if(!error){
+                if(!error && response){
                    if (response.isAdmin == true) {
                        next()
                        

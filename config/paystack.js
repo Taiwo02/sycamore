@@ -1,8 +1,10 @@
 
-const paystack = async(request) => {
-    const MySecretKey = 'Bearer sk_test_674af420e266597b60d2843367db5a6709d6395d';
+let MySecretKey = 'Bearer sk_test_674af420e266597b60d2843367db5a6709d6395d';
+const request = require('request');
+  let paystack = {
+    
     // sk_test_xxxx to be replaced by your own secret key
-   const initializePayment = async(form, mycallback) =>{
+ initializePayment : async(form, mycallback) =>{
         const options = {
             url : 'https://api.paystack.co/transaction/initialize',
             headers : {
@@ -17,12 +19,12 @@ const paystack = async(request) => {
         }
         request.post(options,callback);
 
-   }
+   },
 
 
 
 
-   const verifyPayment = async(ref,mycallback) => {
+ verifyPayment : async(ref,mycallback) => {
     const options = {
         url : 'https://api.paystack.co/transaction/verify/'+encodeURIComponent(ref),
         headers : {
@@ -38,6 +40,6 @@ const paystack = async(request) => {
 
    }
 
-   return {initializePayment, verifyPayment};
+//    return {initializePayment, verifyPayment};
 }
 module.exports = paystack;
