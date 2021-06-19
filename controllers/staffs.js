@@ -336,7 +336,7 @@ let staffs = {
     verifyAccount:async(req,res)=>{
         try {
             let {account,bank_code}=req.body;
-            let acounts = {account:Number(account),bank_code:Number(bank_code)}
+            let acounts = {account:Number(account),bank_code:bank_code}
             // res.status(200).send({data:acounts})
 
             paystack.verifyAccNo(acounts, (error,body)=>{
