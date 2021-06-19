@@ -16,8 +16,8 @@ let user_schema = new Schema({
     atempt:{type:Number,default:null},
     reference:{type:String,default:null},
     user_id:{type:String,default:null},
-    status:{type:String,default:null},
-    currency:{type:String,default:null}
+    currency:{type:String,default:null},
+    transfer_code:{type:String}
 })
 let transaction = mongoose.model('transactions', user_schema);
 module.exports = transaction;

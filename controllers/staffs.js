@@ -2,6 +2,8 @@ const User = require('../model/user');
 const Loan = require('../model/loan')
 const Wallet = require('../model/wallet')
 const Transaction = require('../model/transactions')
+const Recipient = require('../model/recipient')
+
 const jwt = require('jsonwebtoken');
 const date = require('../midlewares/date')
 const _ = require('lodash');
@@ -34,7 +36,7 @@ let staffs = {
             const result=await new User({firstname,lastname,email,address,password});
             result.save(function(error,response){
                 if(response && !error){ 
-                  const walletDetails = new Wallet({user_id:response.id,balance:0,currency:"NGN",});
+                  const walletDetails = new Wallet({user_id:response._id,balance:0,currency:"NGN",});
                   walletDetails.save();
                     res.status(200).send(response)
                 }
@@ -243,7 +245,7 @@ let staffs = {
                         loan_id:loan,
                         reference:response.data.reference,
                         amount:0,
-                        user_id:result.id,
+                        user_id:result._id,
                     });
                     transaction.save()
                     res.status(200).send({url:response.data.authorization_url,message:"Payment initiated"})
@@ -303,7 +305,7 @@ let staffs = {
                         // socket.emit('new login',{result})
                         }
                     })
-                    Wallet.updateOne({id:getWallet.id},newWallet,(err,resultses)=>{
+                    Wallet.updateOne({_id:getWallet._id},newWallet,(err,resultses)=>{
                         if (resultses){ 
                         console.log(resultses)
                         // socket.emit('new login',{result})
@@ -316,11 +318,168 @@ let staffs = {
            } catch (error) {
                res.status(500).send(error)
            }
-    }
+    },
 
 
    
+    verifyAccount:async(req,res)=>{
+        try {
+            const account = {account:req.query.account,bank_code:req.query.bank_code};
+            paystack.verifyAccNo(account, (error,body)=>{
+                if(error){
+                    console.log(error)
+                    //handle errors appropriately
+                    res.status(500).send(error)
+                }
+                response = JSON.parse(body);
+                if(response.status == true){
+                    req['account'] = response.data.account_number;
+                    req['bank_code'] = req.query.bank_code;
+                }
+                else{
+                    res.status(200).send({data:response.data,message:response.message,status:response.status})
+                   }
+                
+                
+            })
+           } catch (error) {
+               res.status(500).send(error)
+           }
+    },
 
+
+    CreateRecipient:async(req,res)=>{
+        try {
+            let _id = req.params.loan_id
+            const loan_result = await Loan.findOne({_id},(err,response)=>{
+                if(err) throw err;
+                return response;
+            })
+            const result = await User.findOne({_id:loan_result.user_id},(err,response)=>{
+                if(err) throw err;
+                return response;
+            })
+            const params = JSON.stringify({
+                "type":"nuban",
+                "name" : retult.firstname + ' '+result.lastname,
+                "account_number": req.account,
+                "bank_code": req.bank_code,
+                "currency": "NGN"
+              })
+            paystack.createRecipt(params, (error,body)=>{
+                if(error){
+                    console.log(error)
+                    //handle errors appropriately
+                    res.status(500).send(error)
+                }
+                response = JSON.parse(body);
+                if(response.status == true){
+                    let date_ob = new Date(response.data.createdAt);
+                    let time_time = date_ob.toTimeString().substr(0, 5);
+                    let fullDate_date = date_ob.toISOString().substr(0, 10)
+                    const recipient= new Recipient({
+                        loan_id:loan_result._id,
+                        account_number:response.data.details.account_number,
+                        account_name:response.data.details.account_name,
+                        bank_code:response.data.details.bank_code,
+                        bank_name:response.data.details.bank_name,
+                        currency:response.data.currency,
+                        type:response.data.type,
+                        name:response.data.name,
+                        recipient_code:response.data.recipient_code,
+                        date:fullDate_date,
+                        time:time_time,
+                        user_id:req.u_ID,
+                    });
+                    recipient.save();
+                    res.status(200).send({data:response.data,message:response.message,status:response.status})
+                }
+                res.status(500).send({data:null,message:response.message,status:response.status})
+            })
+           } catch (error) {
+               res.status(500).send(error)
+           }
+    },
+    initiateTransfer:async(req,res)=>{
+        try {
+            let recipient_code = req.params.recipient_code
+            let {amount}= req.body;
+            const result = await Recipient.findOne({recipient_code:recipient_code},(err,response)=>{
+                if(err) throw err;
+                return response;
+            })
+            let balance = Wallet.findOne({user_id:req.u_ID},(err,wallet)=>{
+                if(err) throw err;
+                return wallet;
+            })
+            if(amount >balance.balance){
+                res.status(200).send({data:null,message:"Insuficient found"})
+            }
+            else{
+                const params = JSON.stringify({
+                    "source": "balance",
+                    "amount": amount,
+                    "recipient": recipient_code,
+                    "reason": "Holiday Flexing",
+                  })
+                paystack.InitiateTransfer(params, (error,body)=>{
+                    if(error){
+                        console.log(error)
+                        //handle errors appropriately
+                        res.status(500).send(error)
+                    }
+                    response = JSON.parse(body);
+                    if(response.status == true){
+                        let date_ob = new Date(response.data.createdAt);
+                        let time_time = date_ob.toTimeString().substr(0, 5);
+                        let fullDate_date = date_ob.toISOString().substr(0, 10)
+                        const transaction= new Transaction({
+                            reference:response.data.reference,
+                            amount:response.data.amount,
+                            currency:response.data.currency,
+                            description:response.data.reason,
+                            type:'payout',
+                            status:response.data.status,
+                            transfer_code:response.data.transfer_code,
+                            date:fullDate_date,
+                            time:time_time,
+                            amount_before:parseFloat(balance.balance),
+                            amount_after: parseFloat((balance.balance + amount)),
+                            user_id:req.u_ID
+                        });
+                        transaction.save();
+                        var newWallet = { $set: {balance:parseFloat((balance.balance - amount))}};
+                            Wallet.updateOne({_id:balance._id},newWallet,(err,resultses)=>{
+                                if (resultses){ 
+                                console.log(resultses)
+                                // socket.emit('new login',{result})
+                                }
+                            })
+                            let userWallet = Wallet.findOne({user_id:result.user_id},(err,response)=>{
+                                if(err) throw err;
+                                return response;
+                            });
+                          let newuserWallet = { $set: {balance:parseFloat((balance.balance + amount))}};
+                          Wallet.updateOne({user_id:userWallet.user_id},newuserWallet,(err,resultses)=>{
+                            if (resultses){ 
+                            console.log(resultses)
+                            // socket.emit('new login',{result})
+                            }
+                        })
+                        res.status(200).send({data:response.data,message:response.message,status:response.status})
+    
+    
+                    }
+                    
+                    
+                })
+
+            }
+
+           } catch (error) {
+               res.status(500).send(error)
+           }
+    }
 
 
 };

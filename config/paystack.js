@@ -38,6 +38,57 @@ const request = require('request');
     }
     request(options,callback);
 
+   },
+
+   verifyAccNo : async(account,mycallback) => {
+    const options = {
+        url : 'https://api.paystack.co/bank/resolve?account_number='+(account.account)+'&bank_code='+(account.bank_code),
+        method: 'GET',
+        headers : {
+            authorization: MySecretKey,
+            'content-type': 'application/json',
+            'cache-control': 'no-cache'
+       }
+    }
+    const callback = (error, response, body)=>{
+        return mycallback(error, body);
+    }
+    request(options,callback);
+
+   },
+
+   createRecipt : async(param,mycallback) => {
+    const options = {
+        url : 'https://api.paystack.co/transferrecipient',
+        method: 'POST',
+        headers : {
+            authorization: MySecretKey,
+            'content-type': 'application/json',
+            'cache-control': 'no-cache'
+       },
+       param
+    }
+    const callback = (error, response, body)=>{
+        return mycallback(error, body);
+    }
+    request(options,callback);
+   },
+   
+   InitiateTransfer : async(param,mycallback) => {
+    const options = {
+        url : 'https://api.paystack.co/transferrecipient',
+        method: 'POST',
+        headers : {
+            authorization: MySecretKey,
+            'content-type': 'application/json',
+            'cache-control': 'no-cache'
+       },
+       param
+    }
+    const callback = (error, response, body)=>{
+        return mycallback(error, body);
+    }
+    request(options,callback);
    }
 
 //    return {initializePayment, verifyPayment};
