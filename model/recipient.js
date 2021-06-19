@@ -21,5 +21,5 @@ let user_schema = new Schema({
 
 
 })
-let recipient = mongoose.model('transactions', user_schema);
+let recipient = mongoose.model('recipient', user_schema);
 module.exports = recipient;

@@ -3,7 +3,6 @@ const Loan = require('../model/loan')
 const Wallet = require('../model/wallet')
 const Transaction = require('../model/transactions')
 const Recipient = require('../model/recipient')
-
 const jwt = require('jsonwebtoken');
 const date = require('../midlewares/date')
 const _ = require('lodash');
