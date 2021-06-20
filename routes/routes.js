@@ -20,6 +20,4 @@ router.route('/get_bank').get(staffs.getBank)
 router.route('/recipient/:loan_id').post(auth,verify,staffs.verifyAccount,staffs.CreateRecipient)
 router.route('/initiateTransfer/:recipient_code').post(auth,verify,staffs.initiateTransfer)
 
-
-
 module.exports = router;
